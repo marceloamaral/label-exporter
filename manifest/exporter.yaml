@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-label-prometheus-exporter
+  namespace: monitoring
+  labels:
+   app.kubernetes.io/name: label-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     app.kubernetes.io/name: label-exporter
+  template:
+    metadata:
+      labels:
+       app.kubernetes.io/name: label-exporter
+    spec:
+      serviceAccountName: label-exporter-sa
+      containers:
+      - name: label-exporter
+        image: quay.io/sustainability/label-exporter:v0.1
+        ports:
+        - containerPort: 9102
+          name: http
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: label-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: label-exporter
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: label-exporter
+  ports:
+  - name: http
+    port: 9102
+    targetPort: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: label-exporter
+  name: label-exporter
+spec:
+  endpoints:
+  - interval: 15s
+    port: http
+    relabelings:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: instance
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: label-exporter
+  namespaceSelector:
+    matchNames:
+    - monitoring
