@@ -27,7 +27,7 @@ endif
 .PHONY: build
 build: tidy-vendor
 	@mkdir -p bin/
-	CGO_ENABLED=0 GOOS=linux go build -o bin/label-exporter ./cmd/exporter.go
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o bin/label-exporter ./cmd/exporter.go
 
 ### toolkit ###
 tidy-vendor:
