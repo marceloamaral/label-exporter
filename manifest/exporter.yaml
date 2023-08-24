@@ -19,6 +19,8 @@ spec:
       containers:
       - name: label-exporter
         image: quay.io/sustainability/label-exporter:v0.1
+        args:
+         - --label-prefix="le__" --expose-all=false
         ports:
         - containerPort: 9102
           name: http

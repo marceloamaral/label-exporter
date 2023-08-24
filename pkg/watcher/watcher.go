@@ -42,8 +42,9 @@ type ObjListWatcher struct {
 	informer     cache.SharedInformer
 	stopChannel  chan struct{}
 
-	LabelNames  *map[string]bool
-	LabelPrefix string
+	LabelNames      *map[string]bool
+	LabelPrefix     string
+	ExposeAllLabels bool
 
 	// PodMetrics holds all pod labels
 	PodMetrics *map[string]map[string]string
@@ -133,7 +134,7 @@ func (w *ObjListWatcher) handleAdded(obj interface{}) {
 			klog.Infof("Could not convert obj: %v", w.ResourceKind)
 			return
 		}
-		if _, ok := pod.ObjectMeta.Labels[exporterLabel]; !ok {
+		if _, ok := pod.ObjectMeta.Labels[exporterLabel]; !ok && !w.ExposeAllLabels {
 			klog.V(5).Infof("Pod %s/%s does not have the label to enable label exporting", pod.Namespace, pod.Name)
 			return
 		}
@@ -142,7 +143,7 @@ func (w *ObjListWatcher) handleAdded(obj interface{}) {
 		}
 		w.Mx.Lock()
 		for label := range pod.ObjectMeta.Labels {
-			if strings.Contains(label, w.LabelPrefix) {
+			if strings.Contains(label, w.LabelPrefix) || w.ExposeAllLabels {
 				(*w.PodMetrics)[pod.Namespace+"/"+pod.Name][label] = pod.ObjectMeta.Labels[label]
 				(*w.LabelNames)[label] = true
 			}

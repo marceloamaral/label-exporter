@@ -31,10 +31,11 @@ import (
 )
 
 var (
-	address     = flag.String("address", "0.0.0.0:9102", "bind address")
-	kubeconfig  = flag.String("kubeconfig", "", "absolute path to the kubeconfig file, if empty we use the in-cluster configuration")
-	metricsPath = flag.String("metrics-path", "/metrics", "metrics path")
-	labelPrefix = flag.String("label-prefix", "le__", "only labels with this prefix will be exported to minimize the prometheus metric cardinality")
+	address         = flag.String("address", "0.0.0.0:9102", "bind address")
+	kubeconfig      = flag.String("kubeconfig", "", "absolute path to the kubeconfig file, if empty we use the in-cluster configuration")
+	metricsPath     = flag.String("metrics-path", "/metrics", "metrics path")
+	labelPrefix     = flag.String("label-prefix", "le__", "only labels with this prefix will be exported to minimize the prometheus metric cardinality")
+	exposeAllLabels = flag.Bool("expose-all", false, "expose all labels, if true the label-prefix will be ignored and all labels of all pods will be exporterd")
 
 	// PrometheusCollector implements the external Collector interface provided by the Prometheus client
 	PrometheusCollector *exporter.PrometheusCollector
@@ -53,6 +54,7 @@ func main() {
 	Watcher := watcher.NewObjListWatcher(*kubeconfig)
 	Watcher.Mx = &PrometheusCollector.Mx
 	Watcher.LabelPrefix = *labelPrefix
+	Watcher.ExposeAllLabels = *exposeAllLabels
 	Watcher.LabelNames = &labelNames
 	Watcher.PodMetrics = &podMetrics
 	Watcher.Run()
