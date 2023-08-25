@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/marceloamaral/label-exporter/pkg/exporter"
 	"github.com/marceloamaral/label-exporter/pkg/watcher"
@@ -31,10 +32,10 @@ import (
 )
 
 var (
-	address         = flag.String("address", "0.0.0.0:9102", "bind address")
-	kubeconfig      = flag.String("kubeconfig", "", "absolute path to the kubeconfig file, if empty we use the in-cluster configuration")
-	metricsPath     = flag.String("metrics-path", "/metrics", "metrics path")
-	labelPrefix     = flag.String("label-prefix", "le__", "only labels with this prefix will be exported to minimize the prometheus metric cardinality")
+	address         = flag.String("address", "0.0.0.0:9102", "Bind address")
+	kubeconfig      = flag.String("kubeconfig", "", "Absolute path to the kubeconfig file, if empty we use the in-cluster configuration")
+	metricsPath     = flag.String("metrics-path", "/metrics", "Metrics path")
+	labelPrefix     = flag.String("label-prefix", "le__,l__", "Comma seperated list of label prefix to find pod labels. The prefix are used to minimize the prometheus metric cardinality")
 	exposeAllLabels = flag.Bool("expose-all", false, "expose all labels, if true the label-prefix will be ignored and all labels of all pods will be exporterd")
 
 	// PrometheusCollector implements the external Collector interface provided by the Prometheus client
@@ -53,7 +54,7 @@ func main() {
 
 	Watcher := watcher.NewObjListWatcher(*kubeconfig)
 	Watcher.Mx = &PrometheusCollector.Mx
-	Watcher.LabelPrefix = *labelPrefix
+	Watcher.LabelPrefixes = strings.Split(*labelPrefix, ",")
 	Watcher.ExposeAllLabels = *exposeAllLabels
 	Watcher.LabelNames = &labelNames
 	Watcher.PodMetrics = &podMetrics

@@ -33,7 +33,6 @@ import (
 const (
 	informerTimeout = time.Minute
 	podResourceType = "pods"
-	exporterLabel   = "export-labels"
 )
 
 type ObjListWatcher struct {
@@ -43,7 +42,7 @@ type ObjListWatcher struct {
 	stopChannel  chan struct{}
 
 	LabelNames      *map[string]bool
-	LabelPrefix     string
+	LabelPrefixes   []string
 	ExposeAllLabels bool
 
 	// PodMetrics holds all pod labels
@@ -134,16 +133,19 @@ func (w *ObjListWatcher) handleAdded(obj interface{}) {
 			klog.Infof("Could not convert obj: %v", w.ResourceKind)
 			return
 		}
-		if _, ok := pod.ObjectMeta.Labels[exporterLabel]; !ok && !w.ExposeAllLabels {
-			klog.V(5).Infof("Pod %s/%s does not have the label to enable label exporting", pod.Namespace, pod.Name)
-			return
-		}
 		if _, ok := (*w.PodMetrics)[pod.Namespace+pod.Name]; !ok {
 			(*w.PodMetrics)[pod.Namespace+"/"+pod.Name] = map[string]string{}
 		}
 		w.Mx.Lock()
 		for label := range pod.ObjectMeta.Labels {
-			if strings.Contains(label, w.LabelPrefix) || w.ExposeAllLabels {
+			addLabel := false
+			for _, prefix := range w.LabelPrefixes {
+				if strings.Contains(label, prefix) || w.ExposeAllLabels {
+					addLabel = true
+					break
+				}
+			}
+			if addLabel || w.ExposeAllLabels {
 				(*w.PodMetrics)[pod.Namespace+"/"+pod.Name][label] = pod.ObjectMeta.Labels[label]
 				(*w.LabelNames)[label] = true
 			}

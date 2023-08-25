@@ -3,14 +3,13 @@ Exports pod labels as prometheus metrics to facilitate metric aggregation.
 
 
 ## How it works
-To minimize the prometheus metric cardinality, the label-exporter only exports labels of pods that contains the label: `label-exporter:`.
-Additionally, only the labels with the prefix `le__` will be exported, where the prefix is a configurable parameter when running the label-exporter.
+Configure the comma separed list of label prefix to be exporte with the parameter `--label-prefix`. The default prefixes are `le__` and `l__`.
 
-To change the label prefix, for example to `application.label`, you need to update the `manifest/exporter.yaml` file with `--label-prefix="application.label"`.
+For example, to export the labels starting with `application.label` or `application.process`, configure the label-exporter command with `--label-prefix="application.label,application.process"`, updating the file: `manifest/exporter.yaml`.
 
-For some use cases, the user might want to expose all pod labels of all pods in the system. To enable that, use the paramenter `--expose-all=true`, updating the `manifest/exporter.yaml` file.
+The main reason to configure label prefixes is to minimize the metric cardinality and avoid prometheus overhead. But, for some use cases, the user might want to expose all pod labels of all pods in the system. To enable that, use the paramenter `--expose-all=true`.
 
-The prometheus metric will be: `label_exporter(pod_name, pod_namespace, ...)`
+The prometheus metric will be: `pod_label_exporter(pod_name, pod_namespace, ...)`
 
 ## How to build
 To create a docker container just do `make build_image`

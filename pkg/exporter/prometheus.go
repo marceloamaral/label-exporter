@@ -42,7 +42,7 @@ func NewPrometheusExporter() *PrometheusCollector {
 func (p *PrometheusCollector) GetDescription() (*prometheus.Desc, []string) {
 	orderedLabels := p.getLabels()
 	return prometheus.NewDesc(
-		prometheus.BuildFQName("", "label", "exporter"),
+		prometheus.BuildFQName("", "pod", "label_exporter"),
 		"Labeled pod labels",
 		append([]string{"pod_name", "pod_namespace"}, orderedLabels...), nil,
 	), orderedLabels
